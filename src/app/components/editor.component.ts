@@ -1,19 +1,22 @@
 import { Component, HostListener } from '@angular/core';
 
+declare var jQuery: any;
+
 @Component({
   selector: 'editor',
   template: `
     <div class="content" *ngFor="let sentence of sentences; let s_i = index;">
-      <span class="content" *ngFor="let word of sentence; let i = index;">
+      <span class="content" *ngFor="let word of sentence; let i = index; trackBy:trackByFn">
 
         <span *ngIf="(currentIndex === i) && (currentSentence === s_i) && !(editing)"
               class="selectedWord"
               (click)="onClick(s_i, i)">{{word}} </span>
         <input *ngIf="(currentIndex === i) && (currentSentence === s_i) && (editing)"
-              class="editingWord"
+              id="editingWord"
               (click)="onClick(s_i, i)"
               type="text"
-              [(ngModel)]="sentences[s_i][i]">
+              [(ngModel)]="sentences[s_i][i]"
+              >
         <span *ngIf="(currentIndex !== i) || (currentSentence !== s_i)"
               (click)="onClick(s_i, i)">{{word}} </span>
       </span>
@@ -31,10 +34,12 @@ import { Component, HostListener } from '@angular/core';
 
     .selectedWord {
       background-color: yellow;
+      color: black;
     }
 
-    .editingWord {
+    #editingWord {
       background-color: pink;
+      min-width: 400px;
     }
   `]
 })
@@ -63,6 +68,9 @@ export class EditorComponent {
       console.log("The sentence number is", s_i,
                   "The word number is", i, 
                   "and the word there is", this.sentences[s_i][i]);
+      if (this.currentSentence !== s_i || this.currentIndex !== i) {
+        this.editing = false;
+      }
       this.currentSentence = s_i;
       this.currentIndex = i;
     }
@@ -93,6 +101,7 @@ export class EditorComponent {
           break;
         case 82: // 'r'
           this.editWord();
+          this.focusWord();
           break;
 
       }
@@ -103,7 +112,7 @@ export class EditorComponent {
         return;
       var sentence = this.sentences[this.currentSentence].splice(0, this.currentIndex + 1);
       sentence.push(sentence.pop() + ".");
-      /**for (var i = 0; i <= this.currentIndex; i++) {
+      /*for (var i = 0; i <= this.currentIndex; i++) {
         sentence += (i !== this.currentIndex) ? 
                    this.sentences[this.currentSentence][i] + " " : 
                    this.sentences[this.currentSentence][i];
@@ -118,6 +127,13 @@ export class EditorComponent {
 
     private editWord = function() {
       this.editing = true;
+    }
+
+    private focusWord = function() {
+      console.log("Focusing word");
+      var item = document.getElementsByClassName(".selectedWord");
+      console.log(item);
+      setTimeout(() => document.getElementById("#editingWord").focus(), 2000);
     }
 
     private finishWord = function() {
@@ -157,7 +173,6 @@ export class EditorComponent {
     private moveRight = function() {
       if (this.isEditing())
         return;
-      console.log("NOT EDITING");
       this.currentIndex++;
       if (this.currentIndex >= this.sentences[this.currentSentence].length)
         this.currentIndex = this.sentences[this.currentSentence].length - 1;
@@ -168,4 +183,7 @@ export class EditorComponent {
         this.currentIndex = this.sentences[this.currentSentence].length - 1;
     }
     
+    trackByFn(index: any, item: any) {
+      return index;
+    }
 }
